@@ -5,19 +5,19 @@ import { Disposable, QuickInputButton, QuickInputButtons, QuickPickItem, window 
 import { codicons, ThemeIcons } from "vscode-ext-codicons";
 const childprocess = require('child_process');
 let nativeStatusBar: vscode.StatusBarItem;
-let projectsJson: string;
+let configurationsJson: string;
 let timer: any;
-let currentProject: string;
+let currentConfiguration: string;
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-	fetchCurrentProject();
-	fetchProjects(true);
-	let cmd1=vscode.commands.registerCommand("vscode-gcp-project-switcher.listProjects", () => listProjects(false));
+	fetchCurrentConfiguration();
+	fetchConfigurations(true);
+	let cmd1=vscode.commands.registerCommand("vscode-gcp-configuration-switcher.listConfigurations", () => listConfigurations(false));
 	context.subscriptions.push(cmd1);
-	let cmd2=vscode.commands.registerCommand("vscode-gcp-project-switcher.fetchProjects", () => fetchProjects(true));
+	let cmd2=vscode.commands.registerCommand("vscode-gcp-configuration-switcher.fetchConfigurations", () => fetchConfigurations(true));
 	context.subscriptions.push(cmd2);
-	let cmd3=vscode.commands.registerCommand("vscode-gcp-project-switcher.fetchCurrentProject", () => fetchProjects(true));
+	let cmd3=vscode.commands.registerCommand("vscode-gcp-configuration-switcher.fetchCurrentConfiguration", () => fetchConfigurations(true));
 	context.subscriptions.push(cmd3);
 	/**/
 	context.subscriptions.push(nativeStatusBar);
@@ -25,33 +25,33 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 
-async function listProjects(forceNewWindow: boolean) {
-	const projects = await fetchProjects(forceNewWindow);
+async function listConfigurations(forceNewWindow: boolean) {
+	const configurations = await fetchConfigurations(forceNewWindow);
 	let items: vscode.QuickPickItem[] = [];
-	for (let index = 0; index < projects.length; index++) {
-		let item = projects[index];
+	for (let index = 0; index < configurations.length; index++) {
+		let item = configurations[index];
 		items.push({
 			label: item.name,
-			description: item.projectId
+			description: item.properties.core.account
 		});
 	}
 
 	const refreshButton: QuickInputButton = {
 		iconPath: ThemeIcons.sync,
-		tooltip: "Refresh project list",
+		tooltip: "Refresh configuration list",
 	};
 
 	const options = <vscode.QuickPickOptions>{
 		matchOnDescription: true,
-		placeHolder: "Loading Projects (pick one...)",
+		placeHolder: "Loading Configurations (pick one...)",
 		buttons: [QuickInputButtons.Back]
 	};
 
 	const pick = await showQuickPick({
-		title: 'Google Cloud Platform Projects',
+		title: 'Google Cloud Platform Configurations',
 		step: 0,
 		totalSteps: 0,
-		placeholder: 'Loading Projects (pick one...)',
+		placeholder: 'Loading Configurations (pick one...)',
 		items: items,
 		buttons: [refreshButton],
 		shouldResume: function shouldResume() {
@@ -92,15 +92,15 @@ async function showQuickPick<T extends QuickPickItem, P extends QuickPickParamet
 
 			disposables.push(
 				input.onDidTriggerButton(async item => {
-					//vscode.window.showInformationMessage('Refreshing projects list...');
-					await listProjects(true);
+					//vscode.window.showInformationMessage('Refreshing configurations list...');
+					await listConfigurations(true);
 					input.dispose();
 					resolve(undefined);
 				}),
 				input.onDidChangeSelection(async items => {
 					//resolve(items[0])
-					changeProject(items[0].description + "");
-					refreshStatusBar(items[0].description + "");
+					changeConfiguration(items[0].label + "");
+					refreshStatusBar(items[0].label + "");
 					input.dispose();
 					resolve(undefined);
 				}
@@ -113,27 +113,27 @@ async function showQuickPick<T extends QuickPickItem, P extends QuickPickParamet
 	}
 }
 
-export function refreshStatusBar(project: string): void {
+export function refreshStatusBar(configuration: string): void {
 	if (nativeStatusBar == undefined) {
 		nativeStatusBar = vscode.window
 			.createStatusBarItem(vscode.StatusBarAlignment.Left, 1000);
 	}
 
-	nativeStatusBar.text = codicons.cloud + ' ' + project;
-	nativeStatusBar.tooltip = 'gcloud current project: ' + project;
-	nativeStatusBar.command = "vscode-gcp-project-switcher.listProjects"
+	nativeStatusBar.text = codicons.cloud + ' ' + configuration;
+	nativeStatusBar.tooltip = 'gcloud current configuration: ' + configuration;
+	nativeStatusBar.command = "vscode-gcp-configuration-switcher.listConfigurations"
 
 	nativeStatusBar.show();
 
 }
 
-export function fetchCurrentProject(): Promise<void> {
-	let cmd = `gcloud config get-value project --format=json`;
+export function fetchCurrentConfiguration(): Promise<void> {
+	let cmd = `gcloud config configurations list --filter='is_active:true' --format=json`;
 
 	clearTimeout(timer);
 
 	timer = setTimeout(function () {
-		fetchCurrentProject();
+		fetchCurrentConfiguration();
 	}, 5000);
 
 	return new Promise((resolve, reject) => {
@@ -141,11 +141,11 @@ export function fetchCurrentProject(): Promise<void> {
 			if (e) { reject(e); }
 			else if (stderr.length > 0) { reject(new Error(stderr)); }
 			else {
-				let project = JSON.parse(stdout);
-				if (0 === project.length) {
+				let configuration = JSON.parse(stdout);
+				if (0 === configuration.length) {
 					resolve(undefined);
 				}
-				resolve(refreshStatusBar(project));
+				resolve(refreshStatusBar(configuration[0].name));
 			}
 		});
 	});
@@ -153,12 +153,12 @@ export function fetchCurrentProject(): Promise<void> {
 }
 
 
-export function fetchProjects(force: boolean): Promise<any> {
-	let cmd = `gcloud projects list --format=json --sort-by=~createTime`;
+export function fetchConfigurations(force: boolean): Promise<any> {
+	let cmd = `gcloud config configurations list --format=json --sort-by=~createTime`;
 
-	if (projectsJson != undefined && force == false) {
+	if (configurationsJson != undefined && force == false) {
 		return new Promise((resolve, reject) => {
-			resolve(JSON.parse(projectsJson));
+			resolve(JSON.parse(configurationsJson));
 		})
 	}
 
@@ -167,7 +167,7 @@ export function fetchProjects(force: boolean): Promise<any> {
 			if (e) { reject(e); }
 			else if (stderr.length > 0) { reject(new Error(stderr)); }
 			else {
-				projectsJson = stdout;
+				configurationsJson = stdout;
 				let data = JSON.parse(stdout);
 				if (0 === data.length) {
 					resolve(undefined);
@@ -178,8 +178,8 @@ export function fetchProjects(force: boolean): Promise<any> {
 	});
 }
 
-export async function changeProject(project: string): Promise<any> {
-	let cmd = `gcloud config set project "` + project + `"`;
+export async function changeConfiguration(configuration: string): Promise<any> {
+	let cmd = `gcloud config configurations activate "` + configuration + `"`;
 
 	return new Promise((resolve, reject) => {
 		childprocess.exec(cmd, (e: Error, stdout: string, stderr: string) => {

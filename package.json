@@ -1,9 +1,9 @@
 {
-	"name": "vscode-gcp-project-switcher",
-	"displayName": "GCP Project Switcher",
-	"description": "This extension allows you to switch your GCP project directly from Visual Studio Code status bar.",
+	"name": "vscode-gcp-configuration-switcher",
+	"displayName": "GCP Configuration Switcher",
+	"description": "This extension allows you to switch your GCP configuration directly from Visual Studio Code status bar.",
 	"version": "1.0.7",
-	"publisher": "pentium10",
+	"publisher": "diegosucaria",
 	"engines": {
 		"vscode": "^1.38.0"
 	},
@@ -14,7 +14,7 @@
 		"gcp",
 		"google cloud platform",
 		"gcloud",
-		"project",
+		"configuration",
 		"switch",
 		"manage"
 	],
@@ -24,31 +24,31 @@
 	],
 	"icon": "images/icon.png",
 	"license": "SEE LICENSE IN LICENSE.md",
-	"homepage": "https://github.com/pentium10/vscode-gcp-project-switcher/blob/master/README.md",
+	"homepage": "https://github.com/diegosucaria/vscode-gcp-configuration-switcher/blob/master/README.md",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/pentium10/vscode-gcp-project-switcher.git"
+		"url": "https://github.com/diegosucaria/vscode-gcp-configuration-switcher.git"
 	},
 	"activationEvents": [
 		"*",
-		"onCommand:vscode-gcp-project-switcher.listProjects",
-		"onCommand:vscode-gcp-project-switcher.fetchProjects",
-		"onCommand:vscode-gcp-project-switcher.fetchCurrentProject"
+		"onCommand:vscode-gcp-configuration-switcher.listConfigurations",
+		"onCommand:vscode-gcp-configuration-switcher.fetchConfigurations",
+		"onCommand:vscode-gcp-configuration-switcher.fetchCurrentConfiguration"
 	],
 	"main": "./out/extension",
 	"contributes": {
 		"commands": [
 			{
-				"command": "vscode-gcp-project-switcher.listProjects",
-				"title": "GCP: listProjects"
+				"command": "vscode-gcp-configuration-switcher.listConfigurations",
+				"title": "GCP: listConfigurations"
 			},
 			{
-				"command": "vscode-gcp-project-switcher.fetchProjects",
-				"title": "GCP: fetchProjects"
+				"command": "vscode-gcp-configuration-switcher.fetchConfigurations",
+				"title": "GCP: fetchConfigurations"
 			},
 			{
-				"command": "vscode-gcp-project-switcher.fetchCurrentProject",
-				"title": "GCP: fetchCurrentProject"
+				"command": "vscode-gcp-configuration-switcher.fetchCurrentConfiguration",
+				"title": "GCP: fetchCurrentConfiguraiton"
 			}
 		]
 	},
